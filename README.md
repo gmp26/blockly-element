@@ -1,7 +1,7 @@
 blockly-element
 ============
 
-See the [component page](http://polymerlabs.github.io/blockly-element) for more information.
+See the [component page](http://gmp26.github.io/blockly-element) for more information.
 
 ## Getting Started
 
