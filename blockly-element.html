@@ -1,0 +1,140 @@
+<!--
+    @license
+    Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+    This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+    The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+    The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+    Code distributed by Google as part of the polymer project is also
+    subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+Element providing a blockly code editor. The code has a dependency on the [Javascript interpreter](https://developers.google.com/blockly/installation/js-interpreter)
+to run code in a sandbox. [Download it](https://github.com/NeilFraser/JS-Interpreter/zipball/master) and extract `acorn_interpreter.js` and place it where this
+file can access it.
+
+The editor uses iframe embedding [as described here](https://developers.google.com/blockly/installation/injecting-resizable). Create a suitable toolset in the file that the iframe loads and point the `src` attribute to its path. Edit the `src` file to adjust the blocks
+that are available in the editor. 
+
+##### Example
+
+      <blockly-element >
+        <xml id="toolbox" style="display: none">
+          <block type="controls_if"></block>
+          <block type="controls_repeat_ext"></block>
+          <block type="logic_compare"></block>
+          <block type="math_number"></block>
+          <block type="math_arithmetic"></block>
+          <block type="text"></block>
+          <block type="text_print"></block>
+        </xml>
+      </blockly-element>
+
+@element blockly-element
+@blurb Element providing solution to no problem in particular.
+@status alpha
+@homepage http://polymerlabs.github.io/blockly-element
+-->
+<polymer-element name="blockly-element" attributes="src">
+
+  <template>
+    <style>
+      :host {
+        display: block;
+        width:100%;
+        height: 100vh;
+      }
+      :host iframe {
+        width: 100%;
+        height: 100vh;
+      }
+    </style>
+    <iframe id="blockly" src="{{src}}"></iframe>
+    <content></content>
+
+  </template>
+
+  <script src="blockly/acorn_interpreter.js"></script>
+
+  <script>
+
+    Polymer({
+      /**
+       * The `src` attribute sets the iframe source where the blockly editor is defined
+       *
+       * @attribute src
+       * @type string
+       * @default 'blockly.html'
+       */
+      src: 'blockly/blockly.html',
+
+      selector: 'foo',
+
+      ready: function() {
+        // Ready is a lifecycle callback.
+        // You can do setup work in here.
+        // More info: http://www.polymer-project.org/docs/polymer/polymer.html#lifecyclemethods
+        var el = this.$.blockly;
+        var self = this;
+        el.onload = function() {
+          console.debug("ready " + el.contentWindow.Blockly);
+          el.blockly = el.contentWindow.Blockly;
+
+          // Let the embedding page know that Blockly is ready.
+          // TODO: dispatch an event instead
+          if(window.blocklyLoaded)
+            window.blocklyLoaded(el.blockly);
+        
+          var tools = document.querySelector('#toolbox');
+          console.log("selector = " + self.selector);
+          //var tools = self.$.toolbox;
+
+          el.blockly.inject(el.contentDocument.body, {toolbox: tools});
+        };
+
+      },
+
+
+      initApi: function(interpreter, scope) {
+        // Add an API function for the alert() block.
+        var wrapper = function(text) {
+          text = text ? text.toString() : '';
+          return interpreter.createPrimitive(alert(text));
+        };
+        interpreter.setProperty(scope, 'alert',
+            interpreter.createNativeFunction(wrapper));
+    
+        // Add an API function for the prompt() block.
+        wrapper = function(text) {
+          text = text ? text.toString() : '';
+          return interpreter.createPrimitive(prompt(text));
+        };
+        interpreter.setProperty(scope, 'prompt',
+            interpreter.createNativeFunction(wrapper));
+      },
+
+
+      code: function () {
+        return this.$.blockly.blockly.JavaScript.workspaceToCode();
+      },
+
+      /**
+       * The `run` method runs the current blockly code.
+       *
+       * @method run 
+       */
+      run: function() {
+        console.log("runtime selector = " + this.selector);
+        var code = this.code();
+        if(!code) return;
+        var interp = new Interpreter(code, this.initApi);
+        if(!interp) return null;
+        interp.run();
+      }
+
+    });
+
+  </script>
+
+</polymer-element>
