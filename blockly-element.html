@@ -19,7 +19,7 @@ that are available in the editor.
 
 ##### Example
 
-      <blockly-element src="blockly/blockly.html">
+      <blockly-element >
         <xml style="display: none">
           <block type="controls_if"></block>
           <block type="controls_repeat_ext"></block>
@@ -36,7 +36,8 @@ that are available in the editor.
 @status alpha
 @homepage http://polymerlabs.github.io/blockly-element
 -->
-<polymer-element name="blockly-element" attributes="src selector">
+<polymer-element name="blockly-element" 
+  attributes="collapse disable maxBlocks media readOnly rtl scrollbars sound trashcan ">
 
   <template>
     <style>
@@ -50,93 +51,179 @@ that are available in the editor.
         height: 100%;
       }
     </style>
-    <iframe id="blockly" src="{{src}}"></iframe>
+    <iframe id="blockly" src="{{cfg}}/blockly.html"></iframe>
     <content id="content"></content>
+    <script src="{{cfg}}/acorn_interpreter.js"></script>
 
   </template>
 
-  <script src="blockly/acorn_interpreter.js"></script>
 
   <script>
+    (function() {
 
-    Polymer({
-      /**
-       * The `src` attribute sets the iframe source where the blockly editor is defined
-       *
-       * @attribute src
-       * @type string
-       * @default 'blockly.html'
-       */
-      src: 'blockly/blockly.html',
-
-      selector: 'xml',
-
-      ready: function() {
-        var el = this.$.blockly;
-        var self = this;
-        el.onload = function() {
-          console.debug("ready " + el.contentWindow.Blockly);
-          el.blockly = el.contentWindow.Blockly;
-
-          // Let the embedding page know that Blockly is ready.
-          // TODO: dispatch an event instead
-          if(window.blocklyLoaded)
-            window.blocklyLoaded(el.blockly);
-        
-          var content = self.$.content.getDistributedNodes();
-          var tools = null;
-          for(var i=0; i<content.length; i++) {
-            var c = content[i];
-            if(c.localName === 'xml') {
-              tools = c;
-              break;
-            }
-          }
-
-          el.blockly.inject(el.contentDocument.body, {toolbox: tools});
-        };
-
-      },
-
-
-      initApi: function(interpreter, scope) {
-        // Add an API function for the alert() block.
-        var wrapper = function(text) {
-          text = text ? text.toString() : '';
-          return interpreter.createPrimitive(alert(text));
-        };
-        interpreter.setProperty(scope, 'alert',
-            interpreter.createNativeFunction(wrapper));
-    
-        // Add an API function for the prompt() block.
-        wrapper = function(text) {
-          text = text ? text.toString() : '';
-          return interpreter.createPrimitive(prompt(text));
-        };
-        interpreter.setProperty(scope, 'prompt',
-            interpreter.createNativeFunction(wrapper));
-      },
-
-
-      code: function () {
-        return this.$.blockly.blockly.JavaScript.workspaceToCode();
-      },
-
-      /**
-       * The `run` method runs the current blockly code.
-       *
-       * @method run 
-       */
-      run: function() {
-        console.log("runtime selector = " + this.selector);
-        var code = this.code();
-        if(!code) return;
-        var interp = new Interpreter(code, this.initApi);
-        if(!interp) return null;
-        interp.run();
+      function falsey(f) {
+        var rv = f === false || f === 0 || f === "" || f === undefined || f.toLowerCase() === "false";
+        console.log(rv);
+        return rv; 
       }
 
-    });
+      Polymer({
+
+        /**
+         * `cfg` is the path to the blockly configuration directory containing blockly.html
+         * and javascripts for block definition. Defaults to `blockly`.
+         *
+         * @attribute cfg
+         * @type string
+         * @default 'blockly'
+         */
+        cfg: 'blockly',
+
+        /**
+         * `disable` allows blocks to be disabled. Defaults to true if the toolbox
+         * has categories, else false.
+         *
+         * @attribute disable
+         * @type boolean
+         * @default categories
+         */
+
+        /**
+         * `maxBlocks` limits the number of blocks that may be used.
+         *
+         * @attribute maxBlocks
+         * @type number
+         * @default Infinity
+         */
+
+        /**
+         * `media` path from page to the blockly media directory. Defaults to
+         * "https://blockly-demo.appspot.com/static/media/". Media directory contains sounds.
+         *
+         * @attribute media
+         * @type number
+         * @default media
+         */
+
+        /**
+         * `readOnly` prevents the user from editing.
+         *
+         * @attribute readOnly
+         * @type boolean
+         * @default false
+         */
+
+        /**
+         * Right to left layout (e.g. for Arabic).
+         *
+         * @attribute rtl
+         * @type boolean
+         * @default false
+         */
+
+        /**
+         * `scrollbars` determines whether workspace is scrollable. Defaults to true if the toolbox
+         * has categories, else false.
+         *
+         * @attribute scrollbars
+         * @type boolean
+         * @default categories
+         */
+
+        /**
+         * `If `false`, don't play sounds (e.g. click and delete). 
+         *
+         * @attribute sound
+         * @type boolean
+         * @default true
+         */
+
+        /**
+         * `trashcan` Displays or hides the trashcan. Defaults to `true` if the toolbox has categories, `false` otherwise.
+         *
+         * @attribute trashcan
+         * @type boolean
+         * @default categories
+         */
+
+        ready: function() {
+          var el = this.$.blockly;
+          var self = this;
+          el.onload = function() {
+            console.debug("ready " + el.contentWindow.Blockly);
+            el.blockly = el.contentWindow.Blockly;
+
+            // Let the embedding page know that Blockly is ready.
+            if(window.blocklyLoaded)
+              window.blocklyLoaded(el.blockly);
+          
+            var content = self.$.content.getDistributedNodes();
+            var tools = null;
+            for(var i=0; i<content.length; i++) {
+              var c = content[i];
+              if(c.localName === 'xml') {
+                tools = c;
+                break;
+              }
+            }
+
+            el.blockly.inject(el.contentDocument.body, {
+              collapse: !falsey(self.collapse),
+              comments: !falsey(self.comments),
+              disable: !falsey(self.disable),
+              maxBlocks: !falsey(self.maxBlocks) ? self.maxBlocks : Infinity,
+              media: !falsey(self.media) ? self.media : "https://blockly-demo.appspot.com/static/media/",
+              readOnly: !falsey(self.readOnly),
+              rtl: !falsey(self.rtl),
+              scrollbars: !falsey(self.scrollbars),
+              sound: !falsey(self.sound),
+              trashcan: !falsey(self.trashcan), 
+              toolbox: tools
+            });
+          };
+
+        },
+
+
+        initApi: function(interpreter, scope) {
+          // Add an API function for the alert() block.
+          var wrapper = function(text) {
+            text = text ? text.toString() : '';
+            return interpreter.createPrimitive(alert(text));
+          };
+          interpreter.setProperty(scope, 'alert',
+              interpreter.createNativeFunction(wrapper));
+      
+          // Add an API function for the prompt() block.
+          wrapper = function(text) {
+            text = text ? text.toString() : '';
+            return interpreter.createPrimitive(prompt(text));
+          };
+          interpreter.setProperty(scope, 'prompt',
+              interpreter.createNativeFunction(wrapper));
+        },
+
+
+        code: function () {
+          return this.$.blockly.blockly.JavaScript.workspaceToCode();
+        },
+
+        /**
+         * The `run` method runs the current blockly code.
+         *
+         * @method run 
+         */
+        run: function() {
+          console.log("runtime selector = " + this.selector);
+          var code = this.code();
+          if(!code) return;
+          var interp = new Interpreter(code, this.initApi);
+          if(!interp) return null;
+          interp.run();
+        }
+
+      });
+    })()
 
   </script>
 
