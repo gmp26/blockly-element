@@ -19,8 +19,8 @@ that are available in the editor.
 
 ##### Example
 
-      <blockly-element src="blockly/blockly.html" selector="#toolbox">
-        <xml id="toolbox" style="display: none">
+      <blockly-element src="blockly/blockly.html">
+        <xml style="display: none">
           <block type="controls_if"></block>
           <block type="controls_repeat_ext"></block>
           <block type="logic_compare"></block>
@@ -50,10 +50,8 @@ that are available in the editor.
         height: 100%;
       }
     </style>
-    <span>src={{src}}</span>
-    <span>selector={{selector}}</span>
     <iframe id="blockly" src="{{src}}"></iframe>
-    <content></content>
+    <content id="content"></content>
 
   </template>
 
@@ -74,9 +72,6 @@ that are available in the editor.
       selector: 'xml',
 
       ready: function() {
-        // Ready is a lifecycle callback.
-        // You can do setup work in here.
-        // More info: http://www.polymer-project.org/docs/polymer/polymer.html#lifecyclemethods
         var el = this.$.blockly;
         var self = this;
         el.onload = function() {
@@ -88,9 +83,15 @@ that are available in the editor.
           if(window.blocklyLoaded)
             window.blocklyLoaded(el.blockly);
         
-          var tools = document.querySelector(self.selector);
-          console.log("selector = " + self.selector);
-          //var tools = self.$.toolbox;
+          var content = self.$.content.getDistributedNodes();
+          var tools = null;
+          for(var i=0; i<content.length; i++) {
+            var c = content[i];
+            if(c.localName === 'xml') {
+              tools = c;
+              break;
+            }
+          }
 
           el.blockly.inject(el.contentDocument.body, {toolbox: tools});
         };
