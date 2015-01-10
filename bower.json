@@ -1,0 +1,7 @@
+{
+  "name": "blockly-element#gh-pages",
+  "private": true,
+  "dependencies": {
+    "blockly-element": "gmp26/blockly-element#master"
+  }
+}

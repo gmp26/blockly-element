@@ -1,0 +1,36 @@
+{
+  "name": "blockly-element",
+  "authors": [
+    "Anonymous <anonymous@example.com>"
+  ],
+  "description": "Element providing solution to no problem in particular.",
+  "keywords": [
+    "web-component",
+    "web-components",
+    "polymer",
+    "seed"
+  ],
+  "main": "blockly-element.html",
+  "license": "MIT",
+  "homepage": "https://github.com/<USERNAME>/blockly-element/",
+  "ignore": [
+    "/.*",
+    "/tests/"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^0.5.2"
+  },
+  "devDependencies": {
+    "web-component-tester": "Polymer/web-component-tester#^2.0.5"
+  },
+  "_release": "99a09add8f",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "99a09add8f1fafc8e87eae9731200ea20fc0d08f"
+  },
+  "_source": "git://github.com/gmp26/blockly-element.git",
+  "_target": "master",
+  "_originalSource": "gmp26/blockly-element",
+  "_direct": true
+}

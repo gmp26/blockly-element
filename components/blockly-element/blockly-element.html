@@ -1,0 +1,230 @@
+<!--
+    @license
+    Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+    This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+    The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+    The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+    Code distributed by Google as part of the polymer project is also
+    subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+Element providing a blockly code editor. The code has a dependency on the [Javascript interpreter](https://developers.google.com/blockly/installation/js-interpreter)
+to run code in a sandbox. [Download it](https://github.com/NeilFraser/JS-Interpreter/zipball/master) and extract `acorn_interpreter.js` and place it where this
+file can access it.
+
+The editor uses iframe embedding [as described here](https://developers.google.com/blockly/installation/injecting-resizable). Create a suitable toolset in the file that the iframe loads and point the `src` attribute to its path. Edit the `src` file to adjust the blocks
+that are available in the editor. 
+
+##### Example
+
+      <blockly-element >
+        <xml style="display: none">
+          <block type="controls_if"></block>
+          <block type="controls_repeat_ext"></block>
+          <block type="logic_compare"></block>
+          <block type="math_number"></block>
+          <block type="math_arithmetic"></block>
+          <block type="text"></block>
+          <block type="text_print"></block>
+        </xml>
+      </blockly-element>
+
+@element blockly-element
+@blurb Element providing solution to no problem in particular.
+@status alpha
+@homepage http://polymerlabs.github.io/blockly-element
+-->
+<polymer-element name="blockly-element" 
+  attributes="collapse disable maxBlocks media readOnly rtl scrollbars sound trashcan ">
+
+  <template>
+    <style>
+      :host {
+        display: block;
+        width:100%;
+        height: 100%;
+      }
+      :host iframe {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <iframe id="blockly" src="{{cfg}}/blockly.html"></iframe>
+    <content id="content"></content>
+    <script src="{{cfg}}/acorn_interpreter.js"></script>
+
+  </template>
+
+
+  <script>
+    (function() {
+
+      function falsey(f) {
+        var rv = f === false || f === 0 || f === "" || f === undefined || f.toLowerCase() === "false";
+        console.log(rv);
+        return rv; 
+      }
+
+      Polymer({
+
+        /**
+         * `cfg` is the path to the blockly configuration directory containing blockly.html
+         * and javascripts for block definition. Defaults to `blockly`.
+         *
+         * @attribute cfg
+         * @type string
+         * @default 'blockly'
+         */
+        cfg: 'blockly',
+
+        /**
+         * `disable` allows blocks to be disabled. Defaults to true if the toolbox
+         * has categories, else false.
+         *
+         * @attribute disable
+         * @type boolean
+         * @default categories
+         */
+
+        /**
+         * `maxBlocks` limits the number of blocks that may be used.
+         *
+         * @attribute maxBlocks
+         * @type number
+         * @default Infinity
+         */
+
+        /**
+         * `media` path from page to the blockly media directory. Defaults to
+         * "https://blockly-demo.appspot.com/static/media/". Media directory contains sounds.
+         *
+         * @attribute media
+         * @type number
+         * @default media
+         */
+
+        /**
+         * `readOnly` prevents the user from editing.
+         *
+         * @attribute readOnly
+         * @type boolean
+         * @default false
+         */
+
+        /**
+         * Right to left layout (e.g. for Arabic).
+         *
+         * @attribute rtl
+         * @type boolean
+         * @default false
+         */
+
+        /**
+         * `scrollbars` determines whether workspace is scrollable. Defaults to true if the toolbox
+         * has categories, else false.
+         *
+         * @attribute scrollbars
+         * @type boolean
+         * @default categories
+         */
+
+        /**
+         * `If `false`, don't play sounds (e.g. click and delete). 
+         *
+         * @attribute sound
+         * @type boolean
+         * @default true
+         */
+
+        /**
+         * `trashcan` Displays or hides the trashcan. Defaults to `true` if the toolbox has categories, `false` otherwise.
+         *
+         * @attribute trashcan
+         * @type boolean
+         * @default categories
+         */
+
+        ready: function() {
+          var el = this.$.blockly;
+          var self = this;
+          el.onload = function() {
+            console.debug("ready " + el.contentWindow.Blockly);
+            el.blockly = el.contentWindow.Blockly;
+
+            // Let the embedding page know that Blockly is ready.
+            if(window.blocklyLoaded)
+              window.blocklyLoaded(el.blockly);
+          
+            var content = self.$.content.getDistributedNodes();
+            var tools = null;
+            for(var i=0; i<content.length; i++) {
+              var c = content[i];
+              if(c.localName === 'xml') {
+                tools = c;
+                break;
+              }
+            }
+
+            el.blockly.inject(el.contentDocument.body, {
+              collapse: !falsey(self.collapse),
+              comments: !falsey(self.comments),
+              disable: !falsey(self.disable),
+              maxBlocks: !falsey(self.maxBlocks) ? self.maxBlocks : Infinity,
+              media: !falsey(self.media) ? self.media : "https://blockly-demo.appspot.com/static/media/",
+              readOnly: !falsey(self.readOnly),
+              rtl: !falsey(self.rtl),
+              scrollbars: !falsey(self.scrollbars),
+              sound: !falsey(self.sound),
+              trashcan: !falsey(self.trashcan), 
+              toolbox: tools
+            });
+          };
+
+        },
+
+
+        initApi: function(interpreter, scope) {
+          // Add an API function for the alert() block.
+          var wrapper = function(text) {
+            text = text ? text.toString() : '';
+            return interpreter.createPrimitive(alert(text));
+          };
+          interpreter.setProperty(scope, 'alert',
+              interpreter.createNativeFunction(wrapper));
+      
+          // Add an API function for the prompt() block.
+          wrapper = function(text) {
+            text = text ? text.toString() : '';
+            return interpreter.createPrimitive(prompt(text));
+          };
+          interpreter.setProperty(scope, 'prompt',
+              interpreter.createNativeFunction(wrapper));
+        },
+
+
+        code: function () {
+          return this.$.blockly.blockly.JavaScript.workspaceToCode();
+        },
+
+        /**
+         * The `run` method runs the current blockly code.
+         *
+         * @method run 
+         */
+        run: function() {
+          console.log("runtime selector = " + this.selector);
+          var code = this.code();
+          if(!code) return;
+          var interp = new Interpreter(code, this.initApi);
+          if(!interp) return null;
+          interp.run();
+        }
+
+      });
+    })()
+
+  </script>
+
+</polymer-element>
