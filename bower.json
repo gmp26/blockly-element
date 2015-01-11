@@ -1,8 +1,8 @@
 {
   "name": "blockly-element",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "authors": [
-    "Anonymous <anonymous@example.com>"
+    "Anonymous <gmp26@cam.ac.uk>"
   ],
   "description": "Element providing solution to no problem in particular.",
   "keywords": [
@@ -13,7 +13,7 @@
   ],
   "main": "blockly-element.html",
   "license": "MIT",
-  "homepage": "https://github.com/<USERNAME>/blockly-element/",
+  "homepage": "https://github.com/gmp26/blockly-element/",
   "ignore": [
     "/.*",
     "/tests/"
